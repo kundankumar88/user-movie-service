@@ -3,6 +3,7 @@ package com.movie.service.usermovieservice.controller;
 import com.movie.service.usermovieservice.bean.MovieBean;
 import com.movie.service.usermovieservice.bean.RatingBean;
 import com.movie.service.usermovieservice.bean.ResponseData;
+import com.netflix.hystrix.contrib.javanica.annotation.HystrixCommand;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -21,18 +22,26 @@ public class MovieController {
     RestTemplate restTemplate;
 
     @GetMapping("/getMovies/{userId}")
+    @HystrixCommand(fallbackMethod = "fallbackMethodCall")
+
     public ResponseData getMovieAndRatingList(@PathVariable("userId") String userId) {
 
 
-
-       MovieBean userMovie= restTemplate.getForObject("http://MOVIE-SERVICE-ENDPOINT/movie/"+userId, MovieBean.class);  //Get The Movie Info
-        RatingBean ratingBean= restTemplate.getForObject("http://RATING-SERVICE-ENDPOINT/ratings/"+userMovie.getId(), RatingBean.class);
-       ResponseData responseData=new ResponseData();
-       responseData.setMovies(userMovie);
-       responseData.setRatings(ratingBean);
-       responseData.setStatus("Success");
-       return responseData;
+        MovieBean userMovie = restTemplate.getForObject("http://MOVIE-SERVICE-ENDPOINT/movie/" + userId, MovieBean.class);  //Get The Movie Info
+        RatingBean ratingBean = restTemplate.getForObject("http://RATING-SERVICE-ENDPOINT/ratings/" + userMovie.getId(), RatingBean.class);
+        ResponseData responseData = new ResponseData();
+        responseData.setMovies(userMovie);
+        responseData.setRatings(ratingBean);
+        responseData.setStatus("Success");
+        return responseData;
     }
 
 
+    public ResponseData fallbackMethodCall(@PathVariable("userId") String userId) {
+        
+        ResponseData responseData=new ResponseData();
+        responseData.setStatus("FallBack Status ");
+        return responseData;
+
+    }
 }
